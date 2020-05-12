@@ -57,7 +57,7 @@ ARG OPENSTUDIOAPP_DEPS=' \
 #Update CLI to use NRCan branch, the oscli gems are kept in /var/oscli
 RUN sed -i '/^.*standards.*$/d' /var/oscli/Gemfile \
 && echo "gem 'openstudio-standards', :github => 'NREL/openstudio-standards', :branch => 'nrcan'" | sudo tee -a /var/oscli/Gemfile \
-&& export start=`pwd` && cd /var/oscli/ && bundle update && cd $start
+&& export start=`pwd` && cd /var/oscli/ && bundle update openstudio-standards && cd $start
 
 #Install Software and libraries, install ruby, install OpenStudio, 
 # set environment varialble and aliases for ruby and Openstudio. Create 

@@ -85,7 +85,21 @@ RUN echo "$YEL*****Setting gem folder to be accessible by users *****$NC" \
 && adduser osdev sudo \
 && echo "$YEL*****Clean up apt*****$NC" \
 && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-&& apt-get clean 
+&& apt-get clean
+
+
+#Install Python
+RUN apt update \
+&& apt install software-properties-common -y --force-yes  \
+&& add-apt-repository ppa:deadsnakes/ppa -y \
+&& apt update \
+&& apt install python3.7 python3-pip -y --force-yes\
+&& python3 -m pip install boto3 sqlalchemy sqlalchemy_utils sqlalchemy-aurora-data-api sqlalchemy-pagination
+
+#Install AWS tools
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+&& unzip awscliv2.zip \
+&& ./aws/install
 
 USER osdev
 RUN echo "$YEL*****Set user osdev env configuration by adding script to /home/osdev/.bashrc*****$NC"

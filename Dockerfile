@@ -1,5 +1,6 @@
 #Set version of Ubuntu base image
 
+
 ARG DOCKER_OPENSTUDIO_VERSION=3.0.1
 FROM nrel/openstudio:$DOCKER_OPENSTUDIO_VERSION
 

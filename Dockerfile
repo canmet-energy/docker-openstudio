@@ -1,10 +1,10 @@
 #Set version of Ubuntu base image
 
 
-ARG DOCKER_OPENSTUDIO_VERSION=3.0.1
+ARG DOCKER_OPENSTUDIO_VERSION=3.2.0
 FROM nrel/openstudio:$DOCKER_OPENSTUDIO_VERSION
 
-ARG OPENSTUDIO_VERSION=3.0.1
+ARG OPENSTUDIO_VERSION=3.2.0
 ENV OPENSTUDIO_VERSION ${OPENSTUDIO_VERSION}
 
 MAINTAINER Nicholas Long nicholas.long@nrel.gov
@@ -19,8 +19,8 @@ ARG YEL='\033[0;33m'
 ARG NC='\033[0m'
 
 # ENV variables ensured to be available during /bin/sh shell installation.
-# A more permanant solution will be set in .bashrc below. 
-ENV RUBYLIB /usr/Ruby
+# A more permanant solution will be set in .bashrc below.
+ENV RUBYLIB /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby
 
 #Required Software and libraries.
 ## System Software
@@ -83,7 +83,7 @@ RUN echo "$YEL*****Installing Software and deps using apt-get*****$NC" \
 && echo 'red=$(tput setaf 1) && green=$(tput setaf 2) && yellow=$(tput setaf 3) &&  blue=$(tput setaf 4) && magenta=$(tput setaf 5) && reset=$(tput sgr0) && bold=$(tput bold)' >> /etc/user_config_bashrc \ 
 && echo PS1=\''\[$magenta\]\u\[$reset\]@\[$green\]\h\[$reset\]:\[$blue\]\w\[$reset\]\[$yellow\][$(__git_ps1 "%s")]\[$reset\]\$'\' >> /etc/user_config_bashrc \
 && echo "$YEL*****Installing bundle and nokogiri gems on root. Needs to be run under bash *****$NC" \
-&& /bin/bash -c "source /etc/user_config_bashrc && gem install --no-ri --no-rdoc bundler -v 1.16.4 && gem install --no-ri --no-rdoc nokogiri -v 1.8.4" 
+&& /bin/bash -c "source /etc/user_config_bashrc && gem install -N bundler -v 2.2.26 && gem install -N nokogiri -v 1.12.3" 
 RUN echo "$YEL*****Setting gem folder to be accessible by users *****$NC" \
 && echo chmod -R 777 /usr/local/lib/ruby/gems \
 && echo "$YEL*****Adding regular user called osdev and add to sudo group*****$NC" \
@@ -93,6 +93,9 @@ RUN echo "$YEL*****Setting gem folder to be accessible by users *****$NC" \
 && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 && apt-get clean
 
+#Install unzip
+RUN apt update\
+&& apt-get install unzip -y --force-yes
 
 #Install Python
 RUN apt update \

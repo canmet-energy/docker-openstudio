@@ -120,3 +120,14 @@ USER root
 VOLUME /var/simdata/openstudio
 WORKDIR /var/simdata/openstudio
 CMD [ "/bin/bash" ]
+
+# Update git
+RUN add-apt-repository -y ppa:git-core/ppa \
+&& apt-get update \
+&& apt-get install git -y
+
+# Update Environment
+RUN apt-get update \
+&& apt-get upgrade -y --no-install-recommends --force-yes \
+&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+&& apt-get clean

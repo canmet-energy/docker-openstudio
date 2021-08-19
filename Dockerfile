@@ -60,6 +60,18 @@ RUN sed -i '/^.*standards.*$/d' /var/oscli/Gemfile \
 && echo "gem 'openstudio-standards', :github => 'NREL/openstudio-standards', :branch => 'nrcan'" | sudo tee -a /var/oscli/Gemfile \
 && export start=`pwd` && cd /var/oscli/ && bundle update openstudio-standards && cd $start
 
+#Update CLI to use NRCan branch, the oscli gems are kept in /var/oscli
+RUN sed -i '/^.*openstudio-extension.*$/d' /var/oscli/openstudio-gems.gemspec \
+&& sed -i '/^.*openstudio-extension.*$/d' /var/oscli/Gemfile \
+&& echo "gem 'openstudio-extension', :github => 'canmet-energy/openstudio-extension-gem', :branch => 'develop'" | sudo tee -a /var/oscli/Gemfile \
+&& export start=`pwd` && cd /var/oscli/ && bundle update openstudio-extension && cd $start
+
+#Remove openstudio-extensions from /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby
+RUN sed -i '/^.*openstudio-extension.*$/d' /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/openstudio-gems.gemspec \
+&& sed -i '/^.*openstudio-extension.*$/d' /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/Gemfile \
+&& echo "gem 'openstudio-extension', :github => 'canmet-energy/openstudio-extension-gem', :branch => 'develop'" | sudo tee -a /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/Gemfile \
+&& export start=`pwd` && cd /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/ && bundle update openstudio-extension && cd $start
+
 #Install Software and libraries, install ruby, install OpenStudio, 
 # set environment varialble and aliases for ruby and Openstudio. Create 
 # bashrc prompt customization for git for users, and clean apt-get software list. 

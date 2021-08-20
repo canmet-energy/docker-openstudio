@@ -55,12 +55,15 @@ ARG OPENSTUDIOAPP_DEPS=' \
 	libtool \ 
 	autoconf'
 
+#Remove Ruby installation files. Notice that the parent image nrel/openstudio:3.2.0 did not remove the files after the make install was completed. This triggered trivy security issue even if it would never be executed. 
+RUN rm /ruby-2.7.2/ -fr 
+
 #Update CLI to use NRCan branch, the oscli gems are kept in /var/oscli
 RUN sed -i '/^.*standards.*$/d' /var/oscli/Gemfile \
 && echo "gem 'openstudio-standards', :github => 'NREL/openstudio-standards', :branch => 'nrcan'" | sudo tee -a /var/oscli/Gemfile \
 && export start=`pwd` && cd /var/oscli/ && bundle update openstudio-standards && cd $start
 
-#Update CLI to use NRCan branch, the oscli gems are kept in /var/oscli
+#Update /var/oscli to use the nrcan repository develope branch of openstudio-extension-gem
 RUN sed -i '/^.*openstudio-extension.*$/d' /var/oscli/openstudio-gems.gemspec \
 && sed -i '/^.*openstudio-extension.*$/d' /var/oscli/Gemfile \
 && echo "gem 'openstudio-extension', :github => 'canmet-energy/openstudio-extension-gem', :branch => 'develop'" | sudo tee -a /var/oscli/Gemfile \
@@ -71,6 +74,13 @@ RUN sed -i '/^.*openstudio-extension.*$/d' /usr/local/openstudio-${OPENSTUDIO_VE
 && sed -i '/^.*openstudio-extension.*$/d' /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/Gemfile \
 && echo "gem 'openstudio-extension', :github => 'canmet-energy/openstudio-extension-gem', :branch => 'develop'" | sudo tee -a /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/Gemfile \
 && export start=`pwd` && cd /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/ && bundle update openstudio-extension && cd $start
+
+
+# Update rake used in spreadsheet to at least 12.3.3 due to trivy insecurity in 12.3.0
+RUN cd /var/oscli/gems/ruby/2.7.0/gems/spreadsheet-1.2.6/ \
+&& bundle update --bundler \
+&& bundle update rake
+
 
 #Install Software and libraries, install ruby, install OpenStudio, 
 # set environment varialble and aliases for ruby and Openstudio. Create 

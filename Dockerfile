@@ -1,10 +1,10 @@
 #Set version of Ubuntu base image
 
 
-ARG DOCKER_OPENSTUDIO_VERSION=3.2.0
+ARG DOCKER_OPENSTUDIO_VERSION=3.2.1
 FROM nrel/openstudio:$DOCKER_OPENSTUDIO_VERSION
 
-ARG OPENSTUDIO_VERSION=3.2.0
+ARG OPENSTUDIO_VERSION=3.2.1
 ENV OPENSTUDIO_VERSION ${OPENSTUDIO_VERSION}
 
 MAINTAINER Nicholas Long nicholas.long@nrel.gov
@@ -55,7 +55,7 @@ ARG OPENSTUDIOAPP_DEPS=' \
 	libtool \ 
 	autoconf'
 
-#Remove Ruby installation files. Notice that the parent image nrel/openstudio:3.2.0 did not remove the files after the make install was completed. This triggered trivy security issue even if it would never be executed. 
+#Remove Ruby installation files. Notice that the parent image nrel/openstudio:3.2.1 did not remove the files after the make install was completed. This triggered trivy security issue even if it would never be executed. 
 RUN rm /ruby-2.7.2/ -fr 
 
 #Update CLI to use NRCan branch, the oscli gems are kept in /var/oscli

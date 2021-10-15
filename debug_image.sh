@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=3.2.0
+VERSION=3.3.0-alpha
 x_display=$(ipconfig | grep -m 1 "IPv4" | awk '{print $NF}')
 image=openstudio
 

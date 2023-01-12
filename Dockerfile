@@ -1,10 +1,10 @@
 #Set version of Ubuntu base image
 
 
-ARG DOCKER_OPENSTUDIO_VERSION=3.2.1
+ARG DOCKER_OPENSTUDIO_VERSION=3.5.1
 FROM nrel/openstudio:$DOCKER_OPENSTUDIO_VERSION
 
-ARG OPENSTUDIO_VERSION=3.2.1
+ARG OPENSTUDIO_VERSION=3.5.1
 ENV OPENSTUDIO_VERSION ${OPENSTUDIO_VERSION}
 
 MAINTAINER Nicholas Long nicholas.long@nrel.gov
@@ -57,36 +57,50 @@ ARG OPENSTUDIOAPP_DEPS=' \
 
 #Remove Ruby installation files. Notice that the parent image nrel/openstudio:3.2.1 did not remove the files after the make install was completed. This triggered trivy security issue even if it would never be executed. 
 RUN rm /ruby-2.7.2/ -fr 
+RUN rm /OpenStudio-3.5.1+22e1db7be5-Ubuntu-20.04.deb -fr
+RUN rm /ruby-2.7.2.tar.gz -fr
 
 #Update CLI to use NRCan branch, the oscli gems are kept in /var/oscli
-RUN sed -i '/^.*standards.*$/d' /var/oscli/Gemfile \
-&& echo "gem 'openstudio-standards', :github => 'NREL/openstudio-standards', :branch => 'nrcan'" | sudo tee -a /var/oscli/Gemfile \
-&& export start=`pwd` && cd /var/oscli/ && bundle update openstudio-standards && cd $start
+#RUN sed -i '/^.*standards.*$/d' /var/oscli/Gemfile \
+#&& echo "gem 'openstudio-standards', :github => 'NREL/openstudio-standards', :branch => 'nrcan'" | sudo tee -a /var/oscli/Gemfile \
+#&& export start=`pwd` && cd /var/oscli/ && bundle update openstudio-standards && cd $start
 
 #Update /var/oscli to use the nrcan repository develope branch of openstudio-extension-gem
-RUN sed -i '/^.*openstudio-extension.*$/d' /var/oscli/openstudio-gems.gemspec \
-&& sed -i '/^.*openstudio-extension.*$/d' /var/oscli/Gemfile \
-&& echo "gem 'openstudio-extension', :github => 'canmet-energy/openstudio-extension-gem', :branch => 'develop'" | sudo tee -a /var/oscli/Gemfile \
-&& export start=`pwd` && cd /var/oscli/ && bundle update openstudio-extension && cd $start
+#RUN sed -i '/^.*openstudio-extension.*$/d' /var/oscli/openstudio-gems.gemspec \
+#&& sed -i '/^.*openstudio-extension.*$/d' /var/oscli/Gemfile \
+#&& echo "gem 'openstudio-extension', :github => 'canmet-energy/openstudio-extension-gem', :branch => 'develop'" | sudo tee -a /var/oscli/Gemfile \
+#&& export start=`pwd` && cd /var/oscli/ && bundle update openstudio-extension && cd $start
 
 #Remove openstudio-extensions from /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby
-RUN sed -i '/^.*openstudio-extension.*$/d' /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/openstudio-gems.gemspec \
-&& sed -i '/^.*openstudio-extension.*$/d' /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/Gemfile \
-&& echo "gem 'openstudio-extension', :github => 'canmet-energy/openstudio-extension-gem', :branch => 'develop'" | sudo tee -a /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/Gemfile \
-&& export start=`pwd` && cd /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/ && bundle update openstudio-extension && cd $start
+#RUN sed -i '/^.*openstudio-extension.*$/d' /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/openstudio-gems.gemspec \
+#&& sed -i '/^.*openstudio-extension.*$/d' /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/Gemfile \
+#&& echo "gem 'openstudio-extension', :github => 'canmet-energy/openstudio-extension-gem', :branch => 'develop'" | sudo tee -a /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/Gemfile \
+#&& export start=`pwd` && cd /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby/ && bundle update openstudio-extension && cd $start
 
 
 # Update rake used in spreadsheet to at least 12.3.3 due to trivy insecurity in 12.3.0
-RUN cd /var/oscli/gems/ruby/2.7.0/gems/spreadsheet-1.2.6/ \
+RUN cd /var/oscli/gems/ruby/2.7.0/gems/spreadsheet-1.2.9/ \
 && bundle update --bundler \
 && bundle update rake
 
+Run apt-get update -y
+Run apt-get upgrade -y
+
+# Need to set timezone for libxml2-dev package installation
+# Export timezone
+ENV TZ=US/Eastern
+
+# Place timezone data /etc/timezone
+Run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Put NRCan cert into rubygems directory (Remove if not on NRCan network)
+COPY cacert.pem /usr/local/lib/ruby/2.7.0/rubygems/ssl_certs/index.rubygems.org/
 
 #Install Software and libraries, install ruby, install OpenStudio, 
 # set environment varialble and aliases for ruby and Openstudio. Create 
 # bashrc prompt customization for git for users, and clean apt-get software list. 
 RUN echo "$YEL*****Installing Software and deps using apt-get*****$NC" \ 
-&& apt-get update && apt-get install -y --no-install-recommends --force-yes \ 
+&& apt-get update && apt-get install -y --no-install-recommends \ 
 	$SYSTEM_SOFTWARE \
 	$OPENSTUDIOAPP_DEPS \
 && echo  "$YEL******Customizing bash shell*****$NC"	\
@@ -105,7 +119,7 @@ RUN echo "$YEL*****Installing Software and deps using apt-get*****$NC" \
 && echo 'red=$(tput setaf 1) && green=$(tput setaf 2) && yellow=$(tput setaf 3) &&  blue=$(tput setaf 4) && magenta=$(tput setaf 5) && reset=$(tput sgr0) && bold=$(tput bold)' >> /etc/user_config_bashrc \ 
 && echo PS1=\''\[$magenta\]\u\[$reset\]@\[$green\]\h\[$reset\]:\[$blue\]\w\[$reset\]\[$yellow\][$(__git_ps1 "%s")]\[$reset\]\$'\' >> /etc/user_config_bashrc \
 && echo "$YEL*****Installing bundle and nokogiri gems on root. Needs to be run under bash *****$NC" \
-&& /bin/bash -c "source /etc/user_config_bashrc && gem install -N bundler -v 2.1.4 && gem install -N nokogiri -v 1.12.3" 
+&& /bin/bash -c "source /etc/user_config_bashrc && gem install -N bundler -v 2.4.3 && gem install -N nokogiri -v 1.13.10" 
 RUN echo "$YEL*****Setting gem folder to be accessible by users *****$NC" \
 && echo chmod -R 777 /usr/local/lib/ruby/gems \
 && echo "$YEL*****Adding regular user called osdev and add to sudo group*****$NC" \
@@ -117,14 +131,14 @@ RUN echo "$YEL*****Setting gem folder to be accessible by users *****$NC" \
 
 #Install unzip
 RUN apt update\
-&& apt-get install unzip -y --force-yes
+&& apt-get install unzip -y
 
 #Install Python
 RUN apt update \
-&& apt install software-properties-common -y --force-yes  \
+&& apt install software-properties-common -y \
 && add-apt-repository ppa:deadsnakes/ppa -y \
 && apt update \
-&& apt install python3.7 python3-pip -y --force-yes\
+&& apt install python3.9 python3-pip -y \
 && python3 -m pip install boto3 sqlalchemy sqlalchemy_utils sqlalchemy-aurora-data-api sqlalchemy-pagination
 
 #Install AWS tools
@@ -143,8 +157,11 @@ VOLUME /var/simdata/openstudio
 WORKDIR /var/simdata/openstudio
 CMD [ "/bin/bash" ]
 
+#Delete certificate from directory
+RUN rm /usr/local/lib/ruby/2.7.0/rubygems/ssl_certs/index.rubygems.org/cacert.pem
+
 # Update Environment
 RUN apt-get update \
-&& apt-get upgrade -y --no-install-recommends --force-yes \
+&& apt-get upgrade -y --no-install-recommends \
 && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 && apt-get clean

@@ -93,6 +93,9 @@ ENV TZ=US/Eastern
 # Place timezone data /etc/timezone
 Run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# Put NRCan cert into rubygems directory (Remove if not on NRCan network)
+COPY cacert.pem /usr/local/lib/ruby/2.7.0/rubygems/ssl_certs/index.rubygems.org/
+
 #Install Software and libraries, install ruby, install OpenStudio, 
 # set environment varialble and aliases for ruby and Openstudio. Create 
 # bashrc prompt customization for git for users, and clean apt-get software list. 
@@ -139,7 +142,7 @@ RUN apt update \
 && python3 -m pip install boto3 sqlalchemy sqlalchemy_utils sqlalchemy-aurora-data-api sqlalchemy-pagination
 
 #Install AWS tools
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+RUN curl -k "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
 && unzip awscliv2.zip \
 && ./aws/install
 
@@ -153,6 +156,9 @@ USER root
 VOLUME /var/simdata/openstudio
 WORKDIR /var/simdata/openstudio
 CMD [ "/bin/bash" ]
+
+#Delete certificate from directory
+RUN rm /usr/local/lib/ruby/2.7.0/rubygems/ssl_certs/index.rubygems.org/cacert.pem
 
 # Update Environment
 RUN apt-get update \

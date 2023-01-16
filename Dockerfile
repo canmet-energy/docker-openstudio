@@ -135,7 +135,7 @@ RUN apt update \
 && apt install software-properties-common -y \
 && add-apt-repository ppa:deadsnakes/ppa -y \
 && apt update \
-&& apt install python3.9 python3-pip -y \
+&& apt install python3.10 python3-pip -y \
 && python3 -m pip install boto3 sqlalchemy sqlalchemy_utils sqlalchemy-aurora-data-api sqlalchemy-pagination
 
 #Install AWS tools

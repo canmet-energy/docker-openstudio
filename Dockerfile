@@ -57,11 +57,13 @@ ARG OPENSTUDIOAPP_DEPS=' \
 
 #Remove Ruby installation files. Notice that the parent image nrel/openstudio:3.6.0 did not remove the files after the make install was completed. This triggered trivy security issue even if it would never be executed. 
 RUN rm /ruby-2.7.2/ -fr 
-RUN rm /OpenStudio-3.6.0+860f5de185-Ubuntu-20.04-x86_64.deb -fr
+RUN rm /OpenStudioApplication-1.6.0+53c249a897-Ubuntu22.04.deb -fr
 RUN rm /ruby-2.7.2.tar.gz -fr
 
 Run apt-get update -y
 Run apt-get upgrade -y
+Run apt-get dist-upgrade -y
+Run apt-get update -y
 
 # Need to set timezone for libxml2-dev package installation
 # Export timezone

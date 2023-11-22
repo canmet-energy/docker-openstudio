@@ -57,7 +57,7 @@ ARG OPENSTUDIOAPP_DEPS=' \
 
 #Remove Ruby installation files. Notice that the parent image nrel/openstudio:3.6.0 did not remove the files after the make install was completed. This triggered trivy security issue even if it would never be executed. 
 RUN rm /ruby-2.7.2/ -fr 
-RUN rm /OpenStudio-3.7.0-rc2+c0cbe73b51-Ubuntu-20.04-x86_64.deb -fr
+RUN rm /OpenStudio-3.7.0+d5269793f1-Ubuntu-20.04-x86_64.deb -fr
 RUN rm /ruby-2.7.2.tar.gz -fr
 
 Run apt-get update -y

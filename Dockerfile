@@ -136,7 +136,8 @@ WORKDIR /var/simdata/openstudio
 CMD [ "/bin/bash" ]
 
 # Update Environment
-RUN apt-get update \
-&& apt-get upgrade -y --no-install-recommends \
+RUN apt-get update -y\
+&& apt-get upgrade -y \
+&& apt-get update -y\
 && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 && apt-get clean

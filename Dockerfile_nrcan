@@ -148,7 +148,8 @@ RUN rm /etc/ssl/certs/ca-certificates_orig.crt
 RUN rm /usr/local/share/ca-certificates/nrcan_azure_amazon.crt
 
 # Update Environment
-RUN apt-get update \
-&& apt-get upgrade -y --no-install-recommends \
+RUN apt-get update -y\
+&& apt-get upgrade -y \
+&& apt-get update -y\
 && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 && apt-get clean

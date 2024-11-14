@@ -53,7 +53,6 @@ ARG OPENSTUDIOAPP_DEPS=' \
 	libxtst6 \
 	zlib1g-dev \ 
 	libtool \ 
-	language-pack-en \ 
 	autoconf'
 
 #Remove Ruby installation files. Notice that the parent image nrel/openstudio:3.6.0 did not remove the files after the make install was completed. This triggered trivy security issue even if it would never be executed. 
@@ -135,6 +134,13 @@ USER root
 VOLUME /var/simdata/openstudio
 WORKDIR /var/simdata/openstudio
 CMD [ "/bin/bash" ]
+
+RUN apt-get update && apt-get install -y locales && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 # Update Environment
 RUN apt-get update -y\

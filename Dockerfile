@@ -1,18 +1,19 @@
 #Set version of Ubuntu base image
 
 
-ARG DOCKER_OPENSTUDIO_VERSION=3.10.0
+ARG DOCKER_OPENSTUDIO_VERSION=3.11.0
 FROM nrel/openstudio:$DOCKER_OPENSTUDIO_VERSION
 
-ARG OPENSTUDIO_VERSION=3.10.0
-ENV OPENSTUDIO_VERSION ${OPENSTUDIO_VERSION}
+ARG OPENSTUDIO_VERSION=3.11.0
+ARG LOCAL_NRCAN=''
+ENV OPENSTUDIO_VERSION=${OPENSTUDIO_VERSION}
 
-MAINTAINER Nicholas Long nicholas.long@nrel.gov
+LABEL author="Nicholas Long nicholas.long@nrel.gov"
 # Set up Display Environment. This optionally allows X11 connections
 # if DISPLAY is passed as an argument.
 ARG DISPLAY=local
 
-ENV DISPLAY ${DISPLAY}
+ENV DISPLAY=${DISPLAY}
 
 #Colors for output to make docker echo commands a bit more readable. 
 ARG YEL='\033[0;33m'
@@ -20,10 +21,10 @@ ARG NC='\033[0m'
 
 # ENV variables ensured to be available during /bin/sh shell installation.
 # A more permanant solution will be set in .bashrc below.
-ENV RUBYLIB /usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby
+ENV RUBYLIB=/usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby
 
-#Required Software and libraries.
-## System Software
+# Required Software and libraries.
+# System Software
 ARG SYSTEM_SOFTWARE=' \
 	build-essential \ 
 	ca-certificates \ 
@@ -32,53 +33,33 @@ ARG SYSTEM_SOFTWARE=' \
 	git \
 	nano \ 
 	wget '
-	
-## OpenStudio Dependant Libraries for Ubuntu 14.04 that gdebi does not satisfy
-## in installation below.					
-ARG OPENSTUDIOAPP_DEPS=' \
-	libasound2	\
-	libdbus-glib-1-2 \ 
-	libfontconfig1 \
-	libfreetype6 \ 
-	libglu1 \ 
-	libjpeg8 \
-	libnss3 \
-	libreadline-dev \ 
-	libsm6 \
-	libssl-dev \
-	libxcomposite1 \
-	libxcursor1 \ 
-	libxi6 \
-	libxml2-dev \ 
-	libxtst6 \
-	zlib1g-dev \ 
-	libtool \ 
-	autoconf'
 
-#Remove Ruby installation files. Notice that the parent image nrel/openstudio:3.6.0 did not remove the files after the make install was completed. This triggered trivy security issue even if it would never be executed. 
-#RUN rm /ruby-2.7.2/ -fr 
-#RUN rm /OpenStudio-3.7.0+d5269793f1-Ubuntu-20.04-x86_64.deb -fr
-#RUN rm /ruby-2.7.2.tar.gz -fr
-
-Run apt-get update -y
-Run apt-get upgrade -y
-Run apt-get dist-upgrade -y
-Run apt-get update -y
+RUN apt-get update -y
+RUN apt-get upgrade -y
+RUN apt-get dist-upgrade -y
+RUN apt-get update -y
 
 # Need to set timezone for libxml2-dev package installation
 # Export timezone
 ENV TZ=US/Eastern
 
 # Place timezone data /etc/timezone
-Run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-#Install Software and libraries, install ruby, install OpenStudio, 
+# Add certificate files if on the NRCan network
+# Note the asterisk wildcard which copies the file only if it exists
+COPY cacert.pem* /usr/local/lib/ruby/2.7.0/rubygems/ssl_certs/index.rubygems.org/
+COPY nrcan_azure_amazon.crt* /usr/local/share/ca-certificates
+RUN if [ -n "$LOCAL_NRCAN" ] ; then \
+		cp /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates_orig.crt \
+		&& sudo update-ca-certificates; \
+	fi
+
+# Install Software and libraries, install ruby, install OpenStudio, 
 # set environment varialble and aliases for ruby and Openstudio. Create 
 # bashrc prompt customization for git for users, and clean apt-get software list. 
 RUN echo "$YEL*****Installing Software and deps using apt-get*****$NC" \ 
-&& apt-get update && apt-get install -y --no-install-recommends \ 
-	$SYSTEM_SOFTWARE \
-	$OPENSTUDIOAPP_DEPS \
+&& apt-get update && apt-get install -y --no-install-recommends $SYSTEM_SOFTWARE \
 && echo  "$YEL******Customizing bash shell*****$NC"	\
 && touch /etc/user_config_bashrc && chmod 755 /etc/user_config_bashrc \
 && echo "$YEL******Set root env configuration by adding script to /root/.bashrc*****$NC" \
@@ -109,16 +90,6 @@ RUN echo "$YEL*****Setting gem folder to be accessible by users *****$NC" \
 RUN apt update\
 && apt-get install unzip -y
 
-#Install Python
-RUN apt update \
-&& apt install software-properties-common -y \
-&& add-apt-repository ppa:deadsnakes/ppa -y \
-&& apt update \
-&& apt install python3-pip -y \
-&& apt update -y \
-&& apt upgrade -y \
-&& python3 -m pip install boto3 sqlalchemy sqlalchemy_utils sqlalchemy-aurora-data-api sqlalchemy-pagination
-
 #Install AWS tools
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
 && unzip awscliv2.zip \
@@ -141,6 +112,14 @@ RUN apt-get update && apt-get install -y locales && \
 
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
+
+# Delete certificate files if on the NRCan network
+RUN if [ -n "$LOCAL_NRCAN" ] ; then \
+		rm /usr/local/lib/ruby/2.7.0/rubygems/ssl_certs/index.rubygems.org/cacert.pem \
+		&& cp /etc/ssl/certs/ca-certificates_orig.crt /etc/ssl/certs/ca-certificates.crt \
+		&& rm /etc/ssl/certs/ca-certificates_orig.crt \
+		&& rm /usr/local/share/ca-certificates/nrcan_azure_amazon.crt; \
+	fi
 
 # Update Environment
 RUN apt-get update -y\

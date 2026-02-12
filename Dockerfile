@@ -48,7 +48,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Add certificate files if on the NRCan network
 # Note the asterisk wildcard which copies the file only if it exists
-COPY cacert.pem* /usr/local/lib/ruby/2.7.0/rubygems/ssl_certs/index.rubygems.org/
+COPY cacert.pem* /usr/local/lib/ruby/3.2.0/rubygems/ssl_certs/index.rubygems.org/
 COPY nrcan_azure_amazon.crt* /usr/local/share/ca-certificates
 RUN if [ -n "$LOCAL_NRCAN" ] ; then \
 		cp /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates_orig.crt \
@@ -115,7 +115,7 @@ ENV LC_ALL=en_US.UTF-8
 
 # Delete certificate files if on the NRCan network
 RUN if [ -n "$LOCAL_NRCAN" ] ; then \
-		rm /usr/local/lib/ruby/2.7.0/rubygems/ssl_certs/index.rubygems.org/cacert.pem \
+		rm /usr/local/lib/ruby/3.2.0/rubygems/ssl_certs/index.rubygems.org/cacert.pem \
 		&& cp /etc/ssl/certs/ca-certificates_orig.crt /etc/ssl/certs/ca-certificates.crt \
 		&& rm /etc/ssl/certs/ca-certificates_orig.crt \
 		&& rm /usr/local/share/ca-certificates/nrcan_azure_amazon.crt; \

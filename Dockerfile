@@ -24,7 +24,6 @@ ARG NC='\033[0m'
 ENV RUBYLIB=/usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby
 
 # Required Software and libraries.
-# System Software
 ARG SYSTEM_SOFTWARE=' \
 	build-essential \ 
 	ca-certificates \ 
@@ -33,6 +32,11 @@ ARG SYSTEM_SOFTWARE=' \
 	git \
 	nano \ 
 	wget '
+
+# Dependencies required by the OpenStudioApp but not explicitly packaged with it. 
+ARG OPENSTUDIOAPP_DEPENDENCIES=' \
+	libnss3 \
+	liboss4-salsa-asound2 '
 
 RUN apt-get update -y
 RUN apt-get upgrade -y
@@ -59,7 +63,7 @@ RUN if [ -n "$LOCAL_NRCAN" ] ; then \
 # set environment varialble and aliases for ruby and Openstudio. Create 
 # bashrc prompt customization for git for users, and clean apt-get software list. 
 RUN echo "$YEL*****Installing Software and deps using apt-get*****$NC" \ 
-&& apt-get update && apt-get install -y --no-install-recommends $SYSTEM_SOFTWARE \
+&& apt-get update && apt-get install -y --no-install-recommends $SYSTEM_SOFTWARE $OPENSTUDIOAPP_DEPENDENCIES \
 && echo  "$YEL******Customizing bash shell*****$NC"	\
 && touch /etc/user_config_bashrc && chmod 755 /etc/user_config_bashrc \
 && echo "$YEL******Set root env configuration by adding script to /root/.bashrc*****$NC" \
